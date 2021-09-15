@@ -1,6 +1,6 @@
 # cvss3tex
-Latex Implementation for CVSSv3
 
+Latex Implementation for CVSSv3 (using `pgfmath` only).
 
 ## Info
 
@@ -46,7 +46,7 @@ You can use `\cvssBaseScore{AV}{AC}{PR}{UI}{S}{C}{I}{A}` and `\cvssBaseScorePret
 ```
 \cvssBaseScorePretty{N}{L}{N}{N}{U}{L}{L}{L}
 \cvssBaseScorePretty{N}{L}{N}{N}{C}{L}{L}{L}
-\cvssBaseScore{N}{L}{N}{N}{C}{L}{L}{L}
+\cvssBaseScore{N}{L}{N}{N}{C}{L}{L}{L}       % only the CVSS score
 ```
 
 Output:

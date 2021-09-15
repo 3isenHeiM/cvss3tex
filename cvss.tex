@@ -1,4 +1,4 @@
-\usepackage{fp}
+\usepackage{pgfmath}
 
 % Equations from https://www.first.org/cvss/specification-document#i8
 % Values from https://www.first.org/cvss/specification-document#i8.4
@@ -11,15 +11,15 @@
 \newcommand*{\AVPvalue}{0.2}
 \newcommand{\parseAttackVector}[1]{%
     \ifnum\pdfstrcmp{#1}{N}=0
-        \AVNvalue%
+    \AVNvalue% #1 = "N"
     \else\ifnum\pdfstrcmp{#1}{A}=0
-        \AVAvalue%
+    \AVAvalue%
     \else\ifnum\pdfstrcmp{#1}{L}=0
-        \AVLvalue%
+    \AVLvalue%
     \else\ifnum\pdfstrcmp{#1}{P}=0
-        \AVPvalue%
+    \AVPvalue%
     \else%
-        InvalidAttackVector%
+    InvalidAttackVector%
     \fi\fi\fi\fi%
 }
 
@@ -29,11 +29,11 @@
 \newcommand*{\ACHvalue}{0.44}
 \newcommand{\parseAttackComplexity}[1]{%
     \ifnum\pdfstrcmp{#1}{L}=0
-        \ACLvalue%
+    \ACLvalue%
     \else\ifnum\pdfstrcmp{#1}{H}=0
-        \ACHvalue%
+    \ACHvalue%
     \else%
-        InvalidAttackComplexity%
+    InvalidAttackComplexity%
     \fi\fi%
 }
 
@@ -48,35 +48,35 @@
     % #1 = Privileges Required
     % #2 = Scope
     \ifnum\pdfstrcmp{#2}{U}=0
-        \parsePrivilegesRequiredScopeUnchanged{#1}%
+    \parsePrivilegesRequiredScopeUnchanged{#1}%
     \else\ifnum\pdfstrcmp{#2}{C}=0
-        \parsePrivilegesRequiredScopeChanged{#1}%
+    \parsePrivilegesRequiredScopeChanged{#1}%
     \else%
-        InvalidPrivilegesRequired%
+    InvalidPrivilegesRequired%
     \fi\fi%
 }
 
 \newcommand{\parsePrivilegesRequiredScopeUnchanged}[1]{%
     \ifnum\pdfstrcmp{#1}{N}=0
-        \PRNvalue%
+    \PRNvalue%
     \else\ifnum\pdfstrcmp{#1}{L}=0
-        \PRLvalue%
+    \PRLvalue%
     \else\ifnum\pdfstrcmp{#1}{H}=0
-        \PRHvalue%
+    \PRHvalue%
     \else%
-        InvalidPrivilegesRequiredScopeUnchanged%
+    InvalidPrivilegesRequiredScopeUnchanged%
     \fi\fi\fi%
 }
 
 \newcommand{\parsePrivilegesRequiredScopeChanged}[1]{%
     \ifnum\pdfstrcmp{#1}{N}=0
-        \PRNvalue%
+    \PRNvalue%
     \else\ifnum\pdfstrcmp{#1}{L}=0
-        \PRLSCvalue%
+    \PRLSCvalue%
     \else\ifnum\pdfstrcmp{#1}{H}=0
-        \PRHSCvalue%
+    \PRHSCvalue%
     \else%
-        InvalidPrivilegesRequiredScopeChanged%
+    InvalidPrivilegesRequiredScopeChanged%
     \fi\fi\fi%
 }
 
@@ -86,11 +86,11 @@
 \newcommand*{\UIRvalue}{0.62}
 \newcommand{\parseUserInteraction}[1]{%
     \ifnum\pdfstrcmp{#1}{N}=0
-        \UINvalue%
+    \UINvalue%
     \else\ifnum\pdfstrcmp{#1}{R}=0
-        \UIRvalue%
+    \UIRvalue%
     \else%
-        InvalidAttackVector%
+    InvalidAttackVector%
     \fi\fi%
 }
 
@@ -109,30 +109,22 @@
 \newcommand*{\CIANvalue}{0.00}
 \newcommand{\parseCIA}[1]{%
     \ifnum\pdfstrcmp{#1}{H}=0
-        \CIAHvalue%
+    \CIAHvalue%
     \else\ifnum\pdfstrcmp{#1}{L}=0
-        \CIALvalue%
+    \CIALvalue%
     \else\ifnum\pdfstrcmp{#1}{N}=0
-        \CIANvalue%
+    \CIANvalue%
     \else%
-        InvalidCIA%
+    InvalidCIA%
     \fi\fi\fi%
 }
 
-\newcommand{\calcIscBase}[3]{%
-    % #1 = ConfidentialityVALUE
-    % #2 = IntegrityVALUE
-    % #3 = AvailabilityVALUE
-    % ISCBase = 1 - [(1−ImpactConf) × (1−ImpactInteg) × (1−ImpactAvail)]
-    \FPeval{calcIscBaseResult}{ 1 - ( (1 - (#1)) * (1 - (#2)) * (1 - (#3)) ) }%
-    \FPclip\calcIscBaseResult\calcIscBaseResult%
-}
 
 \newcommand{\calcAndParseIscBase}[3]{%
     % #1 Confidentiality Impact %High H, Low L, None N
     % #2 Integrity Impact %High H, Low L, None N
     % #3 Availability Impact %High H, Low L, None N
-    \calcIscBase{\parseCIA{#1}}{\parseCIA{#2}}{\parseCIA{#3}}%
+    \pgfmathsetmacro\calcIscBaseResult{1 - ( (1 - (\parseCIA{#1})) * (1 - (\parseCIA{#2})) * (1 - (\parseCIA{#3})) ) }%
 }
 
 \newcommand{\calcIsc}[2]{%
@@ -141,27 +133,16 @@
     % Scope Unchanged 6.42 × ISCBase
     % Scope Changed 7.52 × [ISCBase−0.029] − 3.25 × [ISCBase−0.02]15
     \ifnum\pdfstrcmp{#1}{U}=0
-        \calcIscScopeUnchanged{#2}%
-    \else\ifnum\pdfstrcmp{#1}{C}=0
-        \calcIscScopeChanged{#2}%
+    \pgfmathsetmacro\calcIscResult{ 6.42 * (#2) }%
+    \else
+    \ifnum\pdfstrcmp{#1}{C}=0
+    \pgfmathsetmacro\calcIscResult{7.52 * ( (#2) - 0.029 ) - 3.25 * ( (#2) - 0.02 )^15}%
     \else%
-        InvalidPrivilegesRequired%
-    \fi\fi%
+    InvalidPrivilegesRequired%
+    \fi%
+    \fi%
 }
 
-\newcommand{\calcIscScopeUnchanged}[1]{%
-    % #1 = ICSbase
-    % Scope Unchanged 6.42 × ISCBase
-    \FPeval{calcIscResult}{ 6.42 * (#1) }%
-    \FPclip\calcIscResult\calcIscResult%
-}
-
-\newcommand{\calcIscScopeChanged}[1]{%
-    % #1 = ICSbase
-    % Scope Changed 7.52 × [ISCBase−0.029] − 3.25 × [ISCBase−0.02]15
-    \FPeval{calcIscResult}{ 7.52 * ( (#1) - 0.029 ) - 3.25 * ( (#1) - 0.02 )^15 }%
-    \FPclip\calcIscResult\calcIscResult%
-}
 
 \newcommand{\calcExploitability}[4]{%
     % #1 Attack Vector
@@ -169,8 +150,7 @@
     % #3 Privileges Required
     % #4 User Interaction
     % 8.22 × AttackVector × AttackComplexity × PrivilegeRequired × UserInteraction
-    \FPeval{calcExploitabilityResult}{ 8.22 * (#1) * (#2) * (#3) * (#4) }%
-    \FPclip\calcExploitabilityResult\calcExploitabilityResult%
+    \pgfmathsetmacro\calcExploitabilityResult{ 8.22 * (#1) * (#2) * (#3) * (#4) }%
 }%
 
 \newcommand{\calcAndParseExploitability}[5]{%
@@ -180,59 +160,36 @@
     % #4 User Interaction
     % #5 Scope
     \calcExploitability%
-                        {\parseAttackVector{#1}}%
-                        {\parseAttackComplexity{#2}}%
-                        {\parsePrivilegesRequired{#3}{#5}}%
-                        {\parseUserInteraction{#4}}%
+    {\parseAttackVector{#1}}%
+    {\parseAttackComplexity{#2}}%
+    {\parsePrivilegesRequired{#3}{#5}}%
+    {\parseUserInteraction{#4}}%
 }
 
 \newcommand{\calculateCVSSScopeUnchanged}[2]{%
     % #1 ISC
     % #2 Exploitability
     % Scope Unchanged[4] Round up (Minimum [(Impact + Exploitability),10])
-    \FPeval{calculateCVSSScopeUnchangedTempSum}{ (#1) + (#2) }%
-    \getMinimum{\calculateCVSSScopeUnchangedTempSum}{10}%
-    \ceil{\getMinimumResult}%
-    \FPeval{calculateCVSSScopeUnchangedResult}{ceilResult}%
+    \pgfmathsetmacro\baseCVSSscore{\ceil{min((#1 + #2), 10)}}%
 }
 
 \newcommand{\calculateCVSSScopeChanged}[2]{%
     % #1 ISC
     % #2 Exploitability
     % Scope Changed Round up (Minumum [1.08 × (Impact + Exploitability),10])
-    \FPeval{calculateCVSSScopeChangedTempSum}{ 1.08 * ((#1) + (#2)) }%
-    \getMinimum{\calculateCVSSScopeChangedTempSum}{10}%
-    \ceil{\getMinimumResult}%
-    \FPeval{calculateCVSSScopeChangedResult}{ceilResult}%
+    \pgfmathsetmacro\baseCVSSscore{\ceil{min( (1.08 * (#1 + #2)), 10) }}%
 }
 
-\newcommand{\getMinimum}[2]{%
-    \FPmin{\getMinimumResult}{#1}{#2}%
-}
 
-\newcommand\checkSmallerOrEquals[2]{%
-    \ifdim#1pt=#2pt
-        1
-    \else%
-        \ifdim#1pt<#2pt
-            1
-        \else%
-            0
-        \fi%
-    \fi%
+\ExplSyntaxOn
+% https://tex.stackexchange.com/a/615358/28926
+\NewExpandableDocumentCommand{\ceil}{m}
+{
+    \fp_eval:n { ceil(#1,1) }
+    \fp_compare:nT { ceil(#1,1)=ceil(#1,0) } {.0}
 }
+\ExplSyntaxOff
 
-\newcommand{\ceil}[1]{%
-    \FPeval{\initialNumber}{10 * (#1)}%
-    \FPeval{\cutNumber}{trunc((initialNumber), 0)}%
-    \ifnum\checkSmallerOrEquals{\initialNumber}{\cutNumber}=1
-        \FPeval{\ceilResult}{(cutNumber) / 10}%
-    \else%
-        \FPeval{\ceilResult}{((cutNumber) + 1) / 10}%
-    \fi%
-    \FPclip\ceilResult\ceilResult%
-    \FPtrunc{\ceilResult}{\ceilResult}{1}%
-}
 
 \newcommand{\cvssBaseScore}[8]{%
     % #1 Attack Vector %Network N, Adjacent A, Local L, Physical P
@@ -264,22 +221,26 @@
     \calcAndParseExploitability{#1}{#2}{#3}{#4}{#5}%
     %
     % If (Impact sub score =< 0) 0 else,
-    \ifnum\checkSmallerOrEquals{\calcIscResult}{0}=1
-        0%
-    \else
-        \ifnum\pdfstrcmp{#5}{U}=0%
-            \calculateCVSSScopeUnchanged{\calcIscResult}{\calcExploitabilityResult}%
-            \calculateCVSSScopeUnchangedResult%
-        \else%
-            \ifnum\pdfstrcmp{#5}{C}=0%
-                \calculateCVSSScopeChanged{\calcIscResult}{\calcExploitabilityResult}%
-                \calculateCVSSScopeChangedResult%
-            \else%
-                InvalidScope%
-            \fi%
-        \fi%
+    %
+    \pgfmathparse{\calcIscResult <= 0 ? int(1) : int(0)}%
+    \let\r\pgfmathresult%
+    \ifnum\r>0%
+    0%
+    \else%
+    \ifnum\pdfstrcmp{#5}{U}=0%
+    \calculateCVSSScopeUnchanged{\calcIscResult}{\calcExploitabilityResult}%
+    \baseCVSSscore%
+    \else%
+    \ifnum\pdfstrcmp{#5}{C}=0%
+    \calculateCVSSScopeChanged{\calcIscResult}{\calcExploitabilityResult}%
+    \baseCVSSscore%
+    \else%
+    InvalidScope%
+    \fi%
+    \fi%
     \fi%
 }
+
 
 \newcommand{\cvssBaseScorePretty}[8]{%
     \dumpSettingsShort{#1}{#2}{#3}{#4}{#5}{#6}{#7}{#8}%
@@ -287,44 +248,63 @@
     \formatDump{Score}{\cvssBaseScore{#1}{#2}{#3}{#4}{#5}{#6}{#7}{#8}}
 }
 
+\newcommand{\cvssBaseScoreUsual}[8]{%
+    \cvssBaseScore{#1}{#2}{#3}{#4}{#5}{#6}{#7}{#8}%
+    \quad CVSS:3.1/\dumpSettingsInline{#1}{#2}{#3}{#4}{#5}{#6}{#7}{#8}%
+}%
+
 \newcommand{\cvssTest}{%
-    \noindent%
+    %
     \testParsing%
     \testCalculations%
 }
 
 \newcommand{\testParsing}{%
-    \noindent%
     %
-    \parseAttackVector{N} \\%
-    \parseAttackVector{A} \\%
-    \parseAttackVector{L} \\%
-    \parseAttackVector{P} \\%
     %
-    \parseAttackComplexity{L} \\%
-    \parseAttackComplexity{H} \\%
+    \parseAttackVector{N}
+
+    \parseAttackVector{A}
+
+    \parseAttackVector{L}
+
+    \parseAttackVector{P}
+
     %
-    \parsePrivilegesRequired{N}{U} \\%
-    \parsePrivilegesRequired{L}{U} \\%
-    \parsePrivilegesRequired{H}{U} \\%
-    \parsePrivilegesRequired{N}{C} \\%
-    \parsePrivilegesRequired{L}{C} \\%
-    \parsePrivilegesRequired{H}{C} \\%
+    \parseAttackComplexity{L}
+
+    \parseAttackComplexity{H}
+
     %
-    \parseUserInteraction{N} \\%
-    \parseUserInteraction{R} \\%
+    \parsePrivilegesRequired{N}{U}
+
+    \parsePrivilegesRequired{L}{U}
+
+    \parsePrivilegesRequired{H}{U}
     %
-    \parseCIA{H} \\%
-    \parseCIA{L} \\%
-    \parseCIA{N} \\%
+    \parsePrivilegesRequired{N}{C}
+
+    \parsePrivilegesRequired{L}{C}
+    %
+    \parsePrivilegesRequired{H}{C}
+
+    %
+    \parseUserInteraction{N}
+
+    \parseUserInteraction{R}
+
+    %
+    \parseCIA{H}
+
+    \parseCIA{L}
+
+    \parseCIA{N}
+
 }
+
 
 \newcommand{\testCalculations}{%
     \noindent%
-    %
-    Should be 0.875:
-    \calcIscBase{0.5}{0.5}{0.5}%
-    \calcIscBaseResult \\%
     %
     Should be 0.6568:
     \calcAndParseIscBase{N}{L}{H}%
@@ -351,36 +331,28 @@
     \calcExploitabilityResult \\%
     %
     Should be 4.1:
-    \ceil{4.02}%
-    \ceilResult \\%
+    \ceil{4.02}\\%
     %
     Should be 4:
-    \ceil{4.0}%
-    \ceilResult \\%
+    \ceil{4.0}\\%
     %
     Should be 4:
-    \ceil{3.91}%
-    \ceilResult \\%
+    \ceil{3.91}\\%
     %
     Should be 2:
-    \ceil{2}%
-    \ceilResult \\%
+    \ceil{2}\\%
     %
     Should be 0.3:
-    \ceil{0.24}%
-    \ceilResult \\%
+    \ceil{0.24}\\%
     %
     Should be 0.3:
-    \ceil{0.29}%
-    \ceilResult \\%
+    \ceil{0.29}\\%
     %
     Should be -0.2:
-    \ceil{-0.27}%
-    \ceilResult \\%
+    \ceil{-0.27}\\%
     %
     Should be -0.2:
-    \ceil{-0.2}%
-    \ceilResult \\%
+    \ceil{-0.2}\\%
     %
     Should be 7.3:
     \cvssBaseScore{N}{L}{N}{N}{U}{L}{L}{L} \\%
