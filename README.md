@@ -1,6 +1,6 @@
 # cvss3tex
 
-Latex Implementation for CVSSv3 (using `pgfmath` only).
+Latex Implementation for CVSSv3 (using `expl3` only).
 
 ## Info
 
